@@ -11,8 +11,9 @@ const FgBlue = "\x1b[34m"
 const BgBlue = "\x1b[44m"
 const BgRed = "\x1b[41m"
 const BgGreen = "\x1b[42m"
-
-app.use(express.json())
+const white = '\033[37m'
+const blue = '\033[34m'
+const cyan = '\033[36m'
 
 let notes = [
   {
@@ -36,50 +37,52 @@ let notes = [
     "id": 4
   }
 ]
-
 let usedId = notes.map(each => each.id)
 
-const dispRequest = (method, url, version, agent, response) => {
-	console.log(FgGreen, `\n${method} \'${url}\' HTTP ${version} | User-Agent ${agent}\n....`, FgBlue)
-	console.log(response)
-}
+app.use(express.json())
 
+var morgan = require('morgan')
+
+app.use(
+	morgan(function (tokens, req, res) {
+		if (tokens.method(req, res) === "POST") {
+		  return  `${tokens.method(req, res)} "${tokens.url(req, res)}" | User-Agent ${tokens['user-agent'](req, res)} \n ${white} ${tokens.status(req, res)} ${blue} - ${tokens['response-time'](req, res)} ms \n${cyan} ${JSON.stringify(req.body)} ${blue}` 
+		}
+		else {
+		  return  `${tokens.method(req, res)} "${tokens.url(req, res)}" | User-Agent ${tokens['user-agent'](req, res)} \n ${white} ${tokens.status(req, res)} ${blue} - ${tokens['response-time'](req, res)} ms` 
+		}
+	})
+)
+// const dispRequest = (request, response, next) => {
+// 	next()
+// 	console.log(FgGreen, `\n${request.method} \'${request.url}\' HTTP ${request.httpVersion} | User-Agent ${request.headers['user-agent']}\n....`, FgBlue)
+// 	console.log(response._header)
+// }
+// app.use(dispRequest)
 const newId = () => {
 	while (true) {
 		let ID = Math.floor(Math.random() * RANGE)
 
 		if ( !usedId.includes(ID) ) {
 			usedId = usedId.concat(ID)
-			console.log(FgYellow,`New person of id ${ID}`)
+			console.log(FgYellow,`\nNew person of id ${ID}`, FgBlue)
 			return ID 
 		}
 	}	
 }
 
+
+
 app.listen(PORT, () => {
-	console.log(`Server listening on port: ${PORT}`)
+	console.log(FgYellow, `Server listening on port: ${PORT}`, FgBlue)
 })
 
 app.get('/', (request, response) => {
 	response.send('<h1>Hello</h1>')
-	dispRequest(
-		request.method, 
-		request.url, 
-		request.httpVersion, 
-		request.headers['user-agent'],
-		response._header
-	)
 })
 
 app.get('/api/persons', (request, response) => {
 	response.json(notes)
-	dispRequest(
-		request.method, 
-		request.url, 
-		request.httpVersion, 
-		request.headers['user-agent'], 
-		response._header
-	)
 })
 
 app.get('/api/persons/:id', (request, response) => {
@@ -94,14 +97,6 @@ app.get('/api/persons/:id', (request, response) => {
 			"error": "content not found"
 		})
 	}
-
-	dispRequest(
-		request.method, 
-		request.url, 
-		request.httpVersion, 
-		request.headers['user-agent'], 
-		response._header
-	)
 })
 
 app.get('/info', (request, response) => {
@@ -110,13 +105,6 @@ app.get('/info', (request, response) => {
 			<p>Phonebook has info for ${notes.length} people</p>\
 			<p>${Date()}</p>\
 		</div>`
-	)
-	dispRequest(
-		request.method, 
-		request.url, 
-		request.httpVersion, 
-		request.headers['user-agent'], 
-		response._header
 	)
 })
 
@@ -130,14 +118,6 @@ app.delete('/api/persons/:id', (request, response) => {
 	else {
 		response.status(404).json({"error": "id does not exist"})
 	}
-
-	dispRequest(
-		request.method, 
-		request.url, 
-		request.httpVersion, 
-		request.headers['user-agent'], 
-		response._header
-	)
 })
 
 app.post('/api/persons', (request, response) => {
@@ -150,7 +130,7 @@ app.post('/api/persons', (request, response) => {
   } 
   else if (notes.find(each => each.name === body.name)) {
   	response.status(400).json({
-  		"error":"Name already exists"
+  		"error":"Name must be unique"
   	})
   } 
   else {
@@ -162,12 +142,4 @@ app.post('/api/persons', (request, response) => {
   	notes = notes.concat(note)
   	response.json(notes)
   }
-
-	dispRequest(
-		request.method, 
-		request.url, 
-		request.httpVersion, 
-		request.headers['user-agent'], 
-		response._header
-	)  
 })
