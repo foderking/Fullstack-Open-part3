@@ -1,6 +1,7 @@
+require('dotenv').config()
 const express = require('express')
 const app = express()
-const PORT =  process.env.PORT || 3002
+const PORT =  process.env.PORT 
 const RANGE = 1000
 
 const FgGreen = "\x1b[32m"
@@ -15,33 +16,11 @@ const white = '\033[37m'
 const blue = '\033[34m'
 const cyan = '\033[36m'
 
-let notes = [
-  {
-    "name": "Arto Hellas",
-    "number": "040-123456",
-    "id": 1
-  },
-  {
-    "name": "Ada Lovelace",
-    "number": "39-44-5323523",
-    "id": 2
-  },
-  {
-    "name": "Dan Abramov",
-    "number": "12-43-234345",
-    "id": 3
-  },
-  {
-    "name": "Mary Poppendieck",
-    "number": "39-23-6423122",
-    "id": 4
-  }
-]
-let usedId = notes.map(each => each.id)
+const Note = require('./models/mongo')
 
 app.use(express.json())
 
-if (PORT === 3001) {
+if (PORT == 3001) {
 	var morgan = require('morgan')
 
 	app.use(
@@ -58,17 +37,7 @@ if (PORT === 3001) {
 
 app.use(express.static('build'))
 
-const newId = () => {
-	while (true) {
-		let ID = Math.floor(Math.random() * RANGE)
 
-		if ( !usedId.includes(ID) ) {
-			usedId = usedId.concat(ID)
-			console.log(FgYellow,`\nNew person of id ${ID}`, FgBlue)
-			return ID 
-		}
-	}	
-}
 
 
 
@@ -76,26 +45,29 @@ app.listen(PORT, () => {
 	console.log(FgYellow, `Server listening on port: ${PORT}`, FgBlue)
 })
 
-// app.get('/', (request, response) => {
-// 	response.send('<h1>Hello</h1>')
-// })
 
 app.get('/api/persons', (request, response) => {
-	response.json(notes)
+  Note
+    .find({})
+    .then(note => {
+      response.json(note)
+    })
+		.catch(error => {
+			response.send(error.message)
+		})
 })
 
 app.get('/api/persons/:id', (request, response) => {
-	const id = Number(request.params.id)
-	const note = notes.find(each => each.id === id)
+	const id = request.params.id
 
-	if (note) {
-		response.json(note)
-	} 
-	else {
-		response.status(404).json({
-			"error": "content not found"
+	Note
+		.findById(id)
+		.then(note => {
+			response.json(note)
 		})
-	}
+		.catch(error => {
+			response.send(error.message)
+		})
 })
 
 app.get('/info', (request, response) => {
@@ -108,7 +80,7 @@ app.get('/info', (request, response) => {
 })
 
 app.delete('/api/persons/:id', (request, response) => {
-	const id = Number(request.params.id)
+	const id = request.params.id
 
 	if (usedId.includes(id)) {
 		notes = notes.filter(each => each.id !== id)	
@@ -127,18 +99,36 @@ app.post('/api/persons', (request, response) => {
       error: 'content missing' 
     })
   } 
-  else if (notes.find(each => each.name === body.name)) {
-  	response.status(400).json({
-  		"error":"Name must be unique"
+  else {
+  	const note = new Note({
+			name: body.name,
+			number: body.number,
   	})
+  	note
+  		.save()
+  		.then(saved => {
+		  	response.json(saved)
+  		})
+  }
+})
+
+app.put('/api/persons/:id', (request, response) => {
+	const body = request.body
+
+	if ( !body.name || !body.number ) {
+    response.status(400).json({ 
+      error: 'content missing' 
+    })
   } 
   else {
-  	const note = {
-  		name: body.name,
-  		number: body.number,
-  		id: newId()
-  	}
-  	notes = notes.concat(note)
-  	response.json(note)
+  	const note = new Note({
+			name: body.name,
+			number: body.number,
+  	})
+  	note
+  		.save()
+  		.then(saved => {
+		  	response.json(saved)
+  		})
   }
 })

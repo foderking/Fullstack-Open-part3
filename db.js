@@ -1,3 +1,4 @@
+
 const mongoose = require('mongoose')
 
 
@@ -14,7 +15,7 @@ const noteSchema = new mongoose.Schema({
 	name: String,
 	number: Number
 })
-const Note = mongoose.model('Node', noteSchema)
+const Note = mongoose.model('Note', noteSchema)
 
 if (process.argv.length === 5) {
 	const note = new Note({
@@ -43,4 +44,3 @@ else {
 	console.log('Not enough parameters: node mongo.js <password> <name> <number>')
 	process.exit(1)
 }
-
