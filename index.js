@@ -1,6 +1,6 @@
 const express = require('express')
 const app = express()
-const PORT =  3001
+const PORT =  process.env.PORT || 3001
 const RANGE = 1000
 
 const FgGreen = "\x1b[32m"
@@ -53,12 +53,9 @@ app.use(
 		}
 	})
 )
-// const dispRequest = (request, response, next) => {
-// 	next()
-// 	console.log(FgGreen, `\n${request.method} \'${request.url}\' HTTP ${request.httpVersion} | User-Agent ${request.headers['user-agent']}\n....`, FgBlue)
-// 	console.log(response._header)
-// }
-// app.use(dispRequest)
+
+app.use(express.static('build'))
+
 const newId = () => {
 	while (true) {
 		let ID = Math.floor(Math.random() * RANGE)
@@ -77,9 +74,9 @@ app.listen(PORT, () => {
 	console.log(FgYellow, `Server listening on port: ${PORT}`, FgBlue)
 })
 
-app.get('/', (request, response) => {
-	response.send('<h1>Hello</h1>')
-})
+// app.get('/', (request, response) => {
+// 	response.send('<h1>Hello</h1>')
+// })
 
 app.get('/api/persons', (request, response) => {
 	response.json(notes)
@@ -113,7 +110,7 @@ app.delete('/api/persons/:id', (request, response) => {
 
 	if (usedId.includes(id)) {
 		notes = notes.filter(each => each.id !== id)	
-		response.status(204).end()
+		response.status(204).json(notes)
 	} 
 	else {
 		response.status(404).json({"error": "id does not exist"})
@@ -140,6 +137,6 @@ app.post('/api/persons', (request, response) => {
   		id: newId()
   	}
   	notes = notes.concat(note)
-  	response.json(notes)
+  	response.json(note)
   }
 })
