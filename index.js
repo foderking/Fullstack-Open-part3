@@ -1,6 +1,6 @@
 const express = require('express')
 const app = express()
-const PORT =  process.env.PORT || 3001
+const PORT =  process.env.PORT || 3002
 const RANGE = 1000
 
 const FgGreen = "\x1b[32m"
@@ -39,20 +39,21 @@ let notes = [
 ]
 let usedId = notes.map(each => each.id)
 
-app.use(express.json())
+if (PORT === 3001) {
+	app.use(express.json())
+	var morgan = require('morgan')
 
-var morgan = require('morgan')
-
-app.use(
-	morgan(function (tokens, req, res) {
-		if (tokens.method(req, res) === "POST") {
-		  return  `${tokens.method(req, res)} "${tokens.url(req, res)}" | User-Agent ${tokens['user-agent'](req, res)} \n ${white} ${tokens.status(req, res)} ${blue} - ${tokens['response-time'](req, res)} ms \n${cyan} ${JSON.stringify(req.body)} ${blue}` 
-		}
-		else {
-		  return  `${tokens.method(req, res)} "${tokens.url(req, res)}" | User-Agent ${tokens['user-agent'](req, res)} \n ${white} ${tokens.status(req, res)} ${blue} - ${tokens['response-time'](req, res)} ms` 
-		}
-	})
-)
+	app.use(
+		morgan(function (tokens, req, res) {
+			if (tokens.method(req, res) === "POST") {
+			  return  `${tokens.method(req, res)} "${tokens.url(req, res)}" | User-Agent ${tokens['user-agent'](req, res)} \n ${white} ${tokens.status(req, res)} ${blue} - ${tokens['response-time'](req, res)} ms \n${cyan} ${JSON.stringify(req.body)} ${blue}` 
+			}
+			else {
+			  return  `${tokens.method(req, res)} "${tokens.url(req, res)}" | User-Agent ${tokens['user-agent'](req, res)} \n ${white} ${tokens.status(req, res)} ${blue} - ${tokens['response-time'](req, res)} ms` 
+			}
+		})
+	)
+}
 
 app.use(express.static('build'))
 
