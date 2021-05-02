@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "nodemon index.js",
+    "server_log": "heroku logs -t",
     "push": " git add . && git commit -m '.' && git push && git push heroku main ",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -39,8 +39,9 @@ let notes = [
 ]
 let usedId = notes.map(each => each.id)
 
+app.use(express.json())
+
 if (PORT === 3001) {
-	app.use(express.json())
 	var morgan = require('morgan')
 
 	app.use(
