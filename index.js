@@ -85,15 +85,9 @@ app.delete('/api/persons/:id', (request, response, next) => {
 app.post('/api/persons', (request, response, next) => {
 	const body = request.body
 
-	if ( !body.name || !body.number ) {
-    response.status(400).json({ 
-      error: 'content missing' 
-    })
-  } 
-  else {
   	const note = new Note({
 			name: body.name,
-			number: body.number,
+			number: body.number
   	})
   	note
   		.save()
@@ -101,18 +95,19 @@ app.post('/api/persons', (request, response, next) => {
 		  	response.json(saved)
   		})
    		.catch(error => next(error))
-  }
 })
 
 app.put('/api/persons/:id', (request, response, next) => {
   const body = request.body
 
   const note = {
-    content: body.content,
-    important: body.important,
+    name: body.name,
+    number: body.number
   }
 
-  Note.findByIdAndUpdate(request.params.id, note, { new: true })
+  Note
+  	.findByIdAndUpdate(request.params.id, note, {new: true, runValidators: true, context: 'query'})
+    .then(updatedNote => updatedNote)
     .then(updatedNote => {
       response.json(updatedNote)
     })
@@ -127,17 +122,17 @@ const unknownEndpoint = (request, response) => {
 }
 app.use(unknownEndpoint)
 
-
-
 const errorHandler = (error, request, response, next) => {
 
-  if (error.name === 'CastError' | error.name === "ValidationError") {
+  if (error.name === 'CastError') {
     return response.status(400).send({ error: 'malformatted id' })
   } 
-  else {
-  console.error(error.message)
+  else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message })
   }
-
+  else if (error.name === 'SyntaxError') {
+    return response.status(400).json({ error: error.message })
+  }
   next(error)
 }
 app.use(errorHandler)
